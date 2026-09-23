@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f9;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      background: #4a90e2;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: background 0.3s, color 0.3s;
+    }
+    .task {
+      cursor: pointer;
+      margin: 5px 0;
+    }
+    .completed {
+      text-decoration: line-through;
+      color: gray;
+    }
+    footer {
+      text-align: center;
+      padding: 10px;
+      background: #ddd;
+      transition: background 0.3s, color 0.3s;
+    }
+    button {
+      margin-top: 10px;
+      padding: 5px 10px;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #357ABD;
+    }
+    /* Dark mode styles */
+    body.dark {
+      background: #121212;
+      color: #eee;
+    }
+    body.dark .card {
+      background: #1e1e1e;
+      color: #eee;
+    }
+    body.dark header {
+      background: #222;
+    }
+    body.dark footer {
+      background: #222;
+      color: #aaa;
+    }
+    /* Mobile-friendly layout */
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr; /* stack cards vertically */
+      }
+      textarea, button {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome, Jason</h1>
+    <p>Your Personal Dashboard</p>
+    <p id="clock"></p>
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Quick Notes</h2>
+      <textarea id="notes" rows="8" style="width:100%;"></textarea>
+    </div>
+    <div class="card">
+      <h2>Daily Itinerary</h2>
+      <ul id="itinerary">
+        <li>☕ Morning coffee at 8 AM</li>
+        <li>💻 Work session at 9 AM</li>
+        <li>🍴 Lunch at 12 PM</li>
+        <li>🏋️ Gym at 6 PM</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Daily Tasks</h2>
+      <ul id="taskList">
+        <li class="task">✔ Finish project report</li>
+        <li class="task">📅 Meeting at 3 PM</li>
+        <li class="task">🛒 Grocery shopping</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Reports</h2>
+      <textarea id="reports" rows="6" style="width:100%;" placeholder="Write your daily report here..."></textarea>
+    </div>
+    <div class="card">
+      <h2>Daily Quote</h2>
+      <p id="quote">"Success is not final, failure is not fatal: it is the courage to continue that counts."</p>
+      <button onclick="newQuote()">Refresh Quote</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>Dashboard © 2026</p>
+  </footer>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+  <script>
+    // Live clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Dark mode toggle with persistence
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    }
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark');
+    }
+
+    // Firebase config
+    const firebaseConfig = {
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCVhRtRLR-GsKL1N-Ib_xr7RtZ3jeGbp54",
+  authDomain: "mydashboard-7ac3f.firebaseapp.com",
+  databaseURL: "https://mydashboard-7ac3f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mydashboard-7ac3f",
+  storageBucket: "mydashboard-7ac3f.firebasestorage.com",
+  messagingSenderId: "206703402037",
+  appId: "1:206703402037:web:0dd7171bceb6fa2c9f657c",
+  measurementId: "G-K95FNWJ4HD"
+};
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Notes sync
+    const notes = document.getElementById('notes');
+    notes.addEventListener('input', () => {
+      db.ref('users/jason/notes').set(notes.value);
+    });
+    db.ref('users/jason/notes').on('value', snapshot => {
+      notes.value = snapshot.val() || '';
+    });
+
+    // Reports sync
+    const reports = document.getElementById('reports');
+    reports.addEventListener('input', () => {
+      db.ref('users/jason/reports').set(reports.value);
+    });
+    db.ref('users/jason/reports').on('value', snapshot => {
+      reports.value = snapshot.val() || '';
+    });
+
+    // Tasks sync
+    const taskList = document.getElementById('taskList');
+    function saveTasks() {
+      const tasks = [];
+      taskList.querySelectorAll('.task').forEach(task => {
+        tasks.push({ text: task.textContent, completed: task.classList.contains('completed') });
+      });
+      db.ref('users/jason/tasks').set(tasks);
+    }
+
+    function loadTasks() {
+      db.ref('users/jason/tasks').on('value', snapshot => {
+        const saved = snapshot.val() || [];
+        taskList.innerHTML = '';
+        saved.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item.text;
+          li.className = 'task';
+          if (item.completed) li.classList.add('completed');
+          li.addEventListener('click', () => {
+            li.classList.toggle('completed');
+            saveTasks();
+          });
+          taskList.appendChild(li);
+        });
+      });
+    }
+    loadTasks();
+
+    // Quote refresher
+    const quotes = [
+      "Believe you can and you're halfway there.",
+      "Do something today that your future self will thank you for.",
+      "The best way to get started is to quit talking and begin doing.",
+      "Don’t let yesterday take up too much of today."
+    ];
+    function newQuote() {
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+      document.getElementById('quote').textContent = quotes[randomIndex];
+    }
+  </script>
+</body>
+</html>
